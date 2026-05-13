@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CX Command · CS Issue Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0b0f1a;--navy2:#111827;--navy3:#1a2235;--navy4:#1f2d45;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8ecf4;--text2:#8b98b8;--text3:#4d5a75;
+  --blue:#4f8ef7;--blue-bg:rgba(79,142,247,0.13);
+  --green:#22c55e;--green-bg:rgba(34,197,94,0.12);
+  --red:#ef4444;--red-bg:rgba(239,68,68,0.12);
+  --amber:#f59e0b;--amber-bg:rgba(245,158,11,0.12);
+  --purple:#a78bfa;--purple-bg:rgba(167,139,250,0.12);
+  --teal:#2dd4bf;--teal-bg:rgba(45,212,191,0.10);
+  --orange:#fb923c;--orange-bg:rgba(251,146,60,0.12);
+  --pink:#f472b6;--pink-bg:rgba(244,114,182,0.12);
+  --r:10px;--rl:16px;--sw:232px;
+}
+html,body{height:100%;background:var(--navy);color:var(--text);font-family:'Instrument Sans',sans-serif}
+body{display:flex;overflow:hidden}
+button{cursor:pointer;font-family:inherit;border:none;background:none}
+input,select{font-family:inherit}
+
+/* ── SIDEBAR ── */
+.sb{width:var(--sw);min-height:100vh;background:var(--navy2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:10}
+.sb-logo{padding:20px 16px 16px;border-bottom:1px solid var(--border)}
+.sb-logo-row{display:flex;align-items:center;gap:10px}
+.sb-icon{width:34px;height:34px;border-radius:9px;background:var(--blue);display:flex;align-items:center;justify-content:center}
+.sb-icon svg{width:17px;height:17px;fill:#fff}
+.sb-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:-0.02em}
+.sb-tagline{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
+
+.sb-nav{padding:12px 8px;flex:1;overflow-y:auto}
+.sb-section{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 10px 5px;font-weight:500}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;margin-bottom:1px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .14s;width:100%;text-align:left}
+.ni:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+.ni.active{background:rgba(79,142,247,0.14);color:var(--blue)}
+.ni svg{width:15px;height:15px;flex-shrink:0;opacity:.8}
+.ni.active svg{opacity:1}
+.ni-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-left:1px}
+.nb{margin-left:auto;font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px}
+.nb.red{background:var(--red-bg);color:var(--red)}
+.nb.amber{background:var(--amber-bg);color:var(--amber)}
+.nb.blue{background:var(--blue-bg);color:var(--blue)}
+.nb.purple{background:var(--purple-bg);color:var(--purple)}
+.nb.orange{background:var(--orange-bg);color:var(--orange)}
+.nb.teal{background:var(--teal-bg);color:var(--teal)}
+.nb.pink{background:var(--pink-bg);color:var(--pink)}
+
+.sb-foot{padding:12px 14px;border-top:1px solid var(--border)}
+.live{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green)}
+.live::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{padding:14px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--navy2);position:sticky;top:0;z-index:5}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.02em}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.tbtn{display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 13px;border-radius:8px;font-weight:500;transition:all .14s;border:1px solid var(--border2);color:var(--text2)}
+.tbtn:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+.tbtn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.tbtn.primary:hover{background:#3d7ae8}
+.content{padding:24px;flex:1}
+.page{display:none}.page.active{display:block}
+
+/* ── STAT GRID ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin-bottom:22px}
+.sc{background:var(--navy3);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;position:relative;overflow:hidden;transition:border-color .18s;cursor:default}
+.sc:hover{border-color:var(--border2)}
+.sc-glow{position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.07;pointer-events:none}
+.sc-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.sc-icon svg{width:15px;height:15px}
+.sc-num{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1;margin-bottom:3px}
+.sc-label{font-size:12px;color:var(--text2);font-weight:500}
+.sc-sub{font-size:10.5px;color:var(--text3);margin-top:2px}
+
+/* ── ISSUE TYPE COLORS ── */
+.i-sub{--ic:var(--orange);--ib:var(--orange-bg)}
+.i-refund{--ic:var(--purple);--ib:var(--purple-bg)}
+.i-address{--ic:var(--teal);--ib:var(--teal-bg)}
+.i-missing{--ic:var(--blue);--ib:var(--blue-bg)}
+.i-duplicate{--ic:var(--pink);--ib:var(--pink-bg)}
+.i-upset{--ic:var(--red);--ib:var(--red-bg)}
+.i-escalation{--ic:var(--amber);--ib:var(--amber-bg)}
+
+.sc.i-sub .sc-icon,.sc.i-sub .sc-glow{background:var(--orange)}
+.sc.i-sub .sc-icon svg{fill:var(--orange)}
+.sc.i-sub .sc-num{color:var(--orange)}
+.sc.i-refund .sc-icon,.sc.i-refund .sc-glow{background:var(--purple)}
+.sc.i-refund .sc-icon svg{fill:var(--purple)}
+.sc.i-refund .sc-num{color:var(--purple)}
+.sc.i-address .sc-icon,.sc.i-address .sc-glow{background:var(--teal)}
+.sc.i-address .sc-icon svg{fill:var(--teal)}
+.sc.i-address .sc-num{color:var(--teal)}
+.sc.i-missing .sc-icon,.sc.i-missing .sc-glow{background:var(--blue)}
+.sc.i-missing .sc-icon svg{fill:var(--blue)}
+.sc.i-missing .sc-num{color:var(--blue)}
+.sc.i-duplicate .sc-icon,.sc.i-duplicate .sc-glow{background:var(--pink)}
+.sc.i-duplicate .sc-icon svg{fill:var(--pink)}
+.sc.i-duplicate .sc-num{color:var(--pink)}
+.sc.i-upset .sc-icon,.sc.i-upset .sc-glow{background:var(--red)}
+.sc.i-upset .sc-icon svg{fill:var(--red)}
+.sc.i-upset .sc-num{color:var(--red)}
+.sc.i-escalation .sc-icon,.sc.i-escalation .sc-glow{background:var(--amber)}
+.sc.i-escalation .sc-icon svg{fill:var(--amber)}
+.sc.i-escalation .sc-num{color:var(--amber)}
+.sc.c-blue .sc-icon,.sc.c-blue .sc-glow{background:var(--blue)}
+.sc.c-blue .sc-icon svg{fill:var(--blue)}
+.sc.c-blue .sc-num{color:var(--blue)}
+.sc.c-green .sc-icon,.sc.c-green .sc-glow{background:var(--green)}
+.sc.c-green .sc-icon svg{fill:var(--green)}
+.sc.c-green .sc-num{color:var(--green)}
+
+/* ── CARDS & LAYOUT ── */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.row31{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:14px}
+.row1{margin-bottom:14px}
+.card{background:var(--navy3);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.ch{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ct{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:-.01em}
+.cs{font-size:11px;color:var(--text3);margin-top:1px}
+.cb{padding:16px 18px}
+
+/* ── BARS ── */
+.bar-item{margin-bottom:11px}.bar-item:last-child{margin-bottom:0}
+.bar-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--text2)}
+.bar-top strong{color:var(--text);font-family:'DM Mono',monospace;font-size:11px}
+.bar-track{height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.bar-fill{height:5px;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+/* ── FEED ── */
+.feed-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.feed-item:last-child{border-bottom:none}
+.fdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.fbody{flex:1;min-width:0}
+.fsubj{font-size:12.5px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fmeta{font-size:11px;color:var(--text3);margin-top:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* ── PILLS ── */
+.pill{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.p-sub{background:var(--orange-bg);color:var(--orange)}
+.p-refund{background:var(--purple-bg);color:var(--purple)}
+.p-address{background:var(--teal-bg);color:var(--teal)}
+.p-missing{background:var(--blue-bg);color:var(--blue)}
+.p-duplicate{background:var(--pink-bg);color:var(--pink)}
+.p-upset{background:var(--red-bg);color:var(--red)}
+.p-escalation{background:var(--amber-bg);color:var(--amber)}
+.p-open{background:var(--blue-bg);color:var(--blue)}
+.p-pending{background:var(--amber-bg);color:var(--amber)}
+.p-resolved{background:var(--green-bg);color:var(--green)}
+.p-high{background:var(--red-bg);color:var(--red)}
+.p-medium{background:var(--amber-bg);color:var(--amber)}
+.p-low{background:var(--teal-bg);color:var(--teal)}
+.p-urgent{background:rgba(239,68,68,.25);color:#fca5a5}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{text-align:left;padding:9px 13px;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:var(--navy2);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+tbody td{padding:10px 13px;color:var(--text2);vertical-align:middle}
+td.subj{color:var(--text);font-weight:500;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── KLINK ── */
+.klink{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;color:var(--text3);padding:3px 7px;border-radius:5px;background:rgba(255,255,255,.05);border:1px solid var(--border);transition:all .13s;text-decoration:none}
+.klink:hover{color:var(--blue);background:var(--blue-bg);border-color:rgba(79,142,247,.3)}
+.klink svg{width:9px;height:9px;fill:currentColor}
+
+/* ── FILTER BAR ── */
+.fbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border)}
+.fbar input,.fbar select{background:var(--navy2);border:1px solid var(--border2);border-radius:8px;padding:6px 11px;font-size:12px;color:var(--text);transition:border-color .14s}
+.fbar input:focus,.fbar select:focus{outline:none;border-color:var(--blue)}
+.fbar input{flex:1;min-width:150px}
+.fbar select option{background:var(--navy2)}
+.fcount{margin-left:auto;font-size:11.5px;color:var(--text3);white-space:nowrap}
+
+/* ── ALERT ── */
+.alert{display:flex;align-items:center;gap:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:var(--r);padding:10px 15px;margin-bottom:18px;font-size:12.5px;color:#fca5a5}
+.alert svg{width:14px;height:14px;fill:var(--red);flex-shrink:0}
+.alert strong{color:var(--red)}
+
+/* ── AGENT TILES ── */
+.ag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px}
+.ag-tile{background:var(--navy4);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;transition:border-color .14s}
+.ag-tile:hover{border-color:var(--border2)}
+.ag-top{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.ag-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.ag-name{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.2}
+.ag-role{font-size:10.5px;color:var(--text3)}
+.ag-pips{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.ap{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:500}
+.ap.tot{background:rgba(255,255,255,.06);color:var(--text2)}
+.ap.opn{background:var(--blue-bg);color:var(--blue)}
+.ap.esc{background:var(--amber-bg);color:var(--amber)}
+.ap.ups{background:var(--red-bg);color:var(--red)}
+
+/* ── TREND INSIGHT CARDS ── */
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ins{background:var(--navy4);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.ins-title{font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:5px}
+.ins-body{font-size:11.5px;color:var(--text2);line-height:1.6}
+
+/* ── DONUT ── */
+.donut-row{display:flex;align-items:center;gap:18px}
+.donut-leg{flex:1;display:flex;flex-direction:column;gap:6px}
+.dli{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text2)}
+.dli-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dli-cnt{margin-left:auto;font-weight:600;color:var(--text);font-family:'DM Mono',monospace;font-size:11px}
+
+/* ── TIMELINE BARS ── */
+.tl-row{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.tl-row:last-child{margin-bottom:0}
+.tl-lbl{font-size:11px;color:var(--text2);width:82px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-wrap{flex:1;height:18px;background:rgba(255,255,255,.04);border-radius:4px;overflow:hidden}
+.tl-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:7px;transition:width .5s ease}
+.tl-n{font-size:10px;font-family:'DM Mono',monospace;font-weight:500}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--navy4);border-radius:10px}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="sb-logo-row">
+      <div class="sb-icon">
+        <svg viewBox="0 0 24 24"><path d="M20 12c0-1.1.9-2 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2z"/></svg>
+      </div>
+      <div>
+        <div class="sb-name">CX Command</div>
+        <div class="sb-tagline">Issue Tracker</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-section">Overview</div>
+    <button class="ni active" onclick="go('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+      Dashboard
+    </button>
+
+    <div class="sb-section" style="margin-top:8px">Issue Types</div>
+
+    <button class="ni" onclick="go('tickets',this,'Subscription confusion')">
+      <div class="ni-dot" style="background:var(--orange)"></div>
+      Subscription confusion
+      <span class="nb orange" id="nb-sub">0</span>
+    </button>
+    <button class="ni" onclick="go('tickets',this,'Refund request')">
+      <div class="ni-dot" style="background:var(--purple)"></div>
+      Refund request
+      <span class="nb purple" id="nb-refund">0</span>
+    </button>
+    <button class="ni" onclick="go('tickets',this,'Wrong address')">
+      <div class="ni-dot" style="background:var(--teal)"></div>
+      Wrong address
+      <span class="nb teal" id="nb-address">0</span>
+    </button>
+    <button class="ni" onclick="go('tickets',this,'Missing package')">
+      <div class="ni-dot" style="background:var(--blue)"></div>
+      Missing package
+      <span class="nb blue" id="nb-missing">0</span>
+    </button>
+    <button class="ni" onclick="go('tickets',this,'Duplicate order')">
+      <div class="ni-dot" style="background:var(--pink)"></div>
+      Duplicate order
+      <span class="nb pink" id="nb-duplicate">0</span>
+    </button>
+    <button class="ni" onclick="go('tickets',this,'Upset customer')">
+      <div class="ni-dot" style="background:var(--red)"></div>
+      Upset customer
+      <span class="nb red" id="nb-upset">0</span>
+    </button>
+    <button class="ni" onclick="go('tickets',this,'Escalations')">
+      <div class="ni-dot" style="background:var(--amber)"></div>
+      Escalations
+      <span class="nb amber" id="nb-esc">0</span>
+    </button>
+
+    <div class="sb-section" style="margin-top:8px">Reports</div>
+    <button class="ni" onclick="go('agents',this)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      Agent load
+    </button>
+    <button class="ni" onclick="go('trends',this)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+      Trends
+    </button>
+  </nav>
+
+  <div class="sb-foot">
+    <div class="live">Kustomer · Live</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:3px">raicom.co · Feb–May 2026</div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <span id="page-badge" style="font-size:11px;color:var(--text3)"></span>
+    </div>
+    <div class="topbar-right">
+      <button class="tbtn" onclick="location.reload()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        Refresh
+      </button>
+      <a href="https://raicom.kustomerapp.com" target="_blank" class="tbtn primary">Open Kustomer ↗</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="page active" id="page-dashboard">
+      <div id="d-alert"></div>
+
+      <!-- Row 1: 4 summary stats -->
+      <div class="stat-grid" id="d-summary"></div>
+
+      <!-- Row 2: 7 issue type cards -->
+      <div class="stat-grid" id="d-issues" style="margin-bottom:22px"></div>
+
+      <div class="row31">
+        <!-- Recent tickets feed -->
+        <div class="card">
+          <div class="ch">
+            <div><div class="ct">Recent open tickets</div><div class="cs">Needs action now</div></div>
+            <button class="tbtn" style="font-size:11px;padding:5px 10px" onclick="go('tickets',null,'')">View all →</button>
+          </div>
+          <div class="cb" style="padding:0 18px" id="d-feed"></div>
+        </div>
+        <!-- Issue donut -->
+        <div class="card">
+          <div class="ch"><div class="ct">Issue breakdown</div></div>
+          <div class="cb">
+            <div class="donut-row">
+              <svg width="96" height="96" viewBox="0 0 36 36" id="donut" style="flex-shrink:0"></svg>
+              <div class="donut-leg" id="donut-leg"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row2">
+        <!-- Agent bars -->
+        <div class="card">
+          <div class="ch"><div class="ct">Agent workload</div><div class="cs">Open + pending per agent</div></div>
+          <div class="cb" id="d-agent-bars"></div>
+        </div>
+        <!-- Issue volume bars -->
+        <div class="card">
+          <div class="ch"><div class="ct">Issue volume</div><div class="cs">All 7 issue types</div></div>
+          <div class="cb" id="d-issue-bars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TICKETS ═══ -->
+    <div class="page" id="page-tickets">
+      <div class="card">
+        <div class="fbar">
+          <input id="t-q" placeholder="Search subject or agent…" oninput="renderTickets()">
+          <select id="t-issue" onchange="renderTickets()">
+            <option value="">All issue types</option>
+            <option>Subscription confusion</option>
+            <option>Refund request</option>
+            <option>Wrong address</option>
+            <option>Missing package</option>
+            <option>Duplicate order</option>
+            <option>Upset customer</option>
+            <option>Escalations</option>
+          </select>
+          <select id="t-status" onchange="renderTickets()">
+            <option value="">All statuses</option>
+            <option>Open</option><option>Pending</option><option>Resolved</option>
+          </select>
+          <select id="t-agent" onchange="renderTickets()">
+            <option value="">All agents</option>
+          </select>
+          <select id="t-sort" onchange="renderTickets()">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="priority">By priority</option>
+            <option value="upset">Upset first</option>
+          </select>
+          <span class="fcount" id="t-count"></span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>ID</th><th>Subject</th><th>Issue</th>
+              <th>Priority</th><th>Status</th><th>Agent</th>
+              <th>Channel</th><th>Updated</th><th>Link</th>
+            </tr></thead>
+            <tbody id="t-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ AGENTS ═══ -->
+    <div class="page" id="page-agents">
+      <div class="stat-grid" id="ag-stats" style="margin-bottom:20px"></div>
+      <div class="card">
+        <div class="ch"><div class="ct">Agent breakdown</div><div class="cs">Tickets per agent · last 3 months</div></div>
+        <div class="cb"><div class="ag-grid" id="ag-grid"></div></div>
+      </div>
+    </div>
+
+    <!-- ═══ TRENDS ═══ -->
+    <div class="page" id="page-trends">
+      <div class="row2">
+        <div class="card"><div class="ch"><div class="ct">Issue type distribution</div></div><div class="cb" id="tr-issue"></div></div>
+        <div class="card"><div class="ch"><div class="ct">Status breakdown</div></div><div class="cb" id="tr-status"></div></div>
+        <div class="card"><div class="ch"><div class="ct">Channel mix</div></div><div class="cb" id="tr-channel"></div></div>
+        <div class="card"><div class="ch"><div class="ct">Sentiment split</div></div><div class="cb" id="tr-sentiment"></div></div>
+      </div>
+      <div class="row1">
+        <div class="card">
+          <div class="ch"><div class="ct">Key insights — what to act on</div><div class="cs">Based on your live Kustomer data</div></div>
+          <div class="cb"><div class="insight-grid" id="tr-insights"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ═══ DATA ═══
+const RAW = [
+  {id:"6a04b6190407ca63b8a6ed61",subject:"Subscription cancellation",status:"Open",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b6190407ca63b8a6ed61"},
+  {id:"6a04b5910407ca63b8a682ad",subject:"Cancel subscriptions and orders",status:"Open",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:0,upset:false,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b5910407ca63b8a682ad"},
+  {id:"6a04b5140407ca63b8a62242",subject:"I haven't ordered any true nutra. What u talking about",status:"Open",priority:"High",agentName:"Shai",channel:"sms",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b5140407ca63b8a62242"},
+  {id:"6a04b58e0407ca63b8a6807f",subject:"Can you take me off subscriptions please",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"sms",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b58e0407ca63b8a6807f"},
+  {id:"6a04b1d50407ca63b8a3984c",subject:"Stop Auto Shipments",status:"Open",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:0,upset:false,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b1d50407ca63b8a3984c"},
+  {id:"6a04b1a00407ca63b8a372f4",subject:"Re: Order TN89809083 confirmed",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b1a00407ca63b8a372f4"},
+  {id:"6a04b4500407ca63b8a5947e",subject:"Re: Shipment TN89103123 has been delivered",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b4500407ca63b8a5947e"},
+  {id:"6a04b2940407ca63b8a43743",subject:"Re: Update On Your Order",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b2940407ca63b8a43743"},
+  {id:"6a04b5ba0407ca63b8a6a26f",subject:"Cancel my subscription please",status:"Open",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:0,upset:false,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b5ba0407ca63b8a6a26f"},
+  {id:"6a04b54f0407ca63b8a6518d",subject:"No more. Cancellation",status:"Open",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b54f0407ca63b8a6518d"},
+  {id:"6a048c0b0407ca63b88797d1",subject:"CANCEL and refund",status:"Open",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:0,upset:false,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a048c0b0407ca63b88797d1"},
+  {id:"6a04b5370407ca63b8a63dbc",subject:"Re: Shipment from TN88851343 is on the way",status:"Open",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b5370407ca63b8a63dbc"},
+  {id:"6a04b4d30407ca63b8a5f17a",subject:"Re: Shipping update for order TN86749963",status:"Open",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b4d30407ca63b8a5f17a"},
+  {id:"6a04b37b0407ca63b8a4f1a1",subject:"Can I cancel my automatic subscription - payment failed",status:"Pending",priority:"High",agentName:"Shai",channel:"sms",sentiment:0,upset:false,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b37b0407ca63b8a4f1a1"},
+  {id:"6a04b31c0407ca63b8a4ad51",subject:"Cancel",status:"Pending",priority:"High",agentName:"Shai",channel:"email",sentiment:0,upset:false,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b31c0407ca63b8a4ad51"},
+  {id:"6a04b4210407ca63b8a57324",subject:"My 2 orders supposed to arrive Saturday have NOT arrived",status:"Open",priority:"Low",agentName:"Lei",channel:"sms",sentiment:0,upset:false,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b4210407ca63b8a57324"},
+  {id:"6a04ada00407ca63b8a0313a",subject:"Have not received my order",status:"Pending",priority:"Low",agentName:"Lei",channel:"sms",sentiment:1,upset:false,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04ada00407ca63b8a0313a"},
+  {id:"6a04b1890407ca63b8a361d1",subject:"Refund of $74.95",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b1890407ca63b8a361d1"},
+  {id:"69ea3e7b9ce2db1544f3cd77",subject:"Please refund this order and stop - I don't want it",status:"Pending",priority:"High",agentName:"Lei",channel:"email",sentiment:0,upset:false,slaBreached:false,created:"2026-04-23",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/69ea3e7b9ce2db1544f3cd77"},
+  {id:"6a04b6380407ca63b8a7042e",subject:"Re: Confirm to Get Emails",status:"Open",priority:"Medium",agentName:"Zwing",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b6380407ca63b8a7042e"},
+  {id:"6a04b2950407ca63b8a437af",subject:"I emailed several times asking to cancel - being ignored",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"sms",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b2950407ca63b8a437af"},
+  {id:"6a0481000407ca63b88068cb",subject:"Re: Update On Your Order - needs urgent follow-up",status:"Pending",priority:"High",agentName:"Unassigned",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a0481000407ca63b88068cb"},
+  {id:"6a04b2140407ca63b8a3c4ea",subject:"No need for this order",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b2140407ca63b8a3c4ea"},
+  {id:"6a04a2be0407ca63b89784f7",subject:"I took the product and haven't seen any results",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"sms",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04a2be0407ca63b89784f7"},
+  {id:"6a0324c10407ca63b8fbb86d",subject:"Did not order the product we received",status:"Pending",priority:"Medium",agentName:"Unassigned",channel:"email",sentiment:-1,upset:true,slaBreached:true,created:"2026-05-12",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a0324c10407ca63b8fbb86d"},
+  {id:"6a034a180407ca63b8142401",subject:"I have not seen any change yet",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"sms",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-12",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a034a180407ca63b8142401"},
+  {id:"6a04b30d0407ca63b8a4a235",subject:"No to subscription",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b30d0407ca63b8a4a235"},
+  {id:"6a04b2d60407ca63b8a476dd",subject:"Stop orders",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b2d60407ca63b8a476dd"},
+  {id:"6a04b1a10407ca63b8a373cf",subject:"Re stop auto delivery",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b1a10407ca63b8a373cf"},
+  {id:"6a04a96b0407ca63b89cf330",subject:"Cancel subscription - Youth Labs",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04a96b0407ca63b89cf330"},
+  {id:"69437c9e504706cf82bf0005",subject:"Do u have them in gummies",status:"Pending",priority:"Medium",agentName:"Unassigned",channel:"sms",sentiment:1,upset:false,slaBreached:true,created:"2025-12-18",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/69437c9e504706cf82bf0005"},
+  {id:"6a04af610407ca63b8a1ae3c",subject:"I would like to cancel my service",status:"Pending",priority:"Medium",agentName:"Zwing",channel:"sms",sentiment:1,upset:false,slaBreached:true,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04af610407ca63b8a1ae3c"},
+  {id:"6a01ea390407ca63b876c291",subject:"Stop all orders",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"sms",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-11",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a01ea390407ca63b876c291"},
+  {id:"6a04b0fb0407ca63b8a2ee77",subject:"Cancel my order",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"sms",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-13",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a04b0fb0407ca63b8a2ee77"},
+  {id:"6a02614b0407ca63b8d07d38",subject:"Re: Shipment TN89043383 in transit - customer angry",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"email",sentiment:-1,upset:true,slaBreached:false,created:"2026-05-11",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a02614b0407ca63b8d07d38"},
+  {id:"6a0372010407ca63b8325c99",subject:"I have not received my order - cancel everything",status:"Pending",priority:"High",agentName:"Enrico Emil Dela Rosa",channel:"sms",sentiment:0,upset:false,slaBreached:false,created:"2026-05-12",updated:"2026-05-13",url:"https://raicom.kustomerapp.com/app/conversations/6a0372010407ca63b8325c99"},
+];
+
+// ═══ CLASSIFY ═══
+function classify(t){
+  const s = t.subject.toLowerCase();
+  if(/refund|money back|\$\d+/.test(s)) return "Refund request";
+  if(/wrong address|address|redirect|zip|postal/.test(s)) return "Wrong address";
+  if(/not receiv|not arriv|missing|haven.t receiv|not delivered|not arrived|have not receiv|saturday have not/.test(s)) return "Missing package";
+  if(/duplicate|double|charged twice|two order|2 order/.test(s)) return "Duplicate order";
+  if(/subscri|auto.?ship|autoship|refill|cancel sub|stop.*ship|ongoing shipment|stop all|stop auto|no more|cancel.*order|cancel.*service|take me off|cancellation|no to sub|cancel$/.test(s)) return "Subscription confusion";
+  if(t.upset || t.sentiment < 0) return "Upset customer";
+  return "Subscription confusion";
+}
+
+const TICKETS = RAW.map(t => {
+  const issue = classify(t);
+  const isEsc = (t.upset || t.priority === "High" || t.priority === "Urgent") && t.status !== "Resolved";
+  return {...t, issue, escalation: isEsc};
+});
+
+// ═══ ISSUE CONFIG ═══
+const IC = {
+  "Subscription confusion": {cls:"i-sub",  pill:"p-sub",  color:"var(--orange)", icon:"📦"},
+  "Refund request":         {cls:"i-refund",pill:"p-refund",color:"var(--purple)",icon:"💰"},
+  "Wrong address":          {cls:"i-address",pill:"p-address",color:"var(--teal)", icon:"📍"},
+  "Missing package":        {cls:"i-missing",pill:"p-missing",color:"var(--blue)",  icon:"📬"},
+  "Duplicate order":        {cls:"i-duplicate",pill:"p-duplicate",color:"var(--pink)",icon:"🔁"},
+  "Upset customer":         {cls:"i-upset", pill:"p-upset", color:"var(--red)",    icon:"😤"},
+  "Escalations":            {cls:"i-escalation",pill:"p-escalation",color:"var(--amber)",icon:"⚠️"},
+};
+const SC_ICONS = {
+  "Subscription confusion": '<path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>',
+  "Refund request":         '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>',
+  "Wrong address":          '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>',
+  "Missing package":        '<path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>',
+  "Duplicate order":        '<path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>',
+  "Upset customer":         '<path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 3c-2.33 0-4.31 1.46-5.11 3.5h10.22c-.8-2.04-2.78-3.5-5.11-3.5z"/>',
+  "Escalations":            '<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>',
+};
+
+const AV_COLORS = [["#1e3a5f","#60a5fa"],["#1a3a2a","#4ade80"],["#3b1a1a","#f87171"],["#2d1a3b","#c084fc"],["#1a2d3b","#38bdf8"],["#2d2a1a","#fbbf24"],["#1f2d1a","#86efac"]];
+
+// ═══ HELPERS ═══
+function count(field, val){ return TICKETS.filter(t=>t[field]===val).length; }
+function countIssue(iss){ return iss==="Escalations" ? TICKETS.filter(t=>t.escalation).length : TICKETS.filter(t=>t.issue===iss).length; }
+function pill(txt,cls){ return `<span class="pill ${cls}">${txt}</span>`; }
+function issuePill(iss){
+  if(!iss) return '';
+  if(IC[iss]) return pill(iss, IC[iss].pill);
+  return pill(iss,'');
+}
+function statusPill(s){ const m={Open:"p-open",Pending:"p-pending",Resolved:"p-resolved"}; return pill(s,m[s]||""); }
+function prioPill(p){ const m={Urgent:"p-urgent",High:"p-high",Medium:"p-medium",Low:"p-low"}; return pill(p,m[p]||""); }
+function klink(url,id){ return `<a href="${url}" target="_blank" class="klink"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7h-2v7zM14 3v2h3.59L7.76 14.83l1.41 1.41L19 5.41V9h2V3h-7z"/></svg>${id.slice(-6)}</a>`; }
+function av(name,i){ const [bg,c]=AV_COLORS[i%AV_COLORS.length]; return `<div class="ag-av" style="background:${bg};color:${c}">${name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}</div>`; }
+
+let activeIssueFilter = "";
+
+// ═══ NAVIGATION ═══
+function go(page, btn, issueFilter){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".ni").forEach(n=>n.classList.remove("active"));
+  document.getElementById("page-"+page).classList.add("active");
+  if(btn) btn.classList.add("active");
+  const titles = {dashboard:"Dashboard",tickets:"All Tickets",agents:"Agent Load",trends:"Trends"};
+  document.getElementById("page-title").textContent = titles[page]||page;
+  if(issueFilter !== undefined){
+    activeIssueFilter = issueFilter;
+    document.getElementById("t-issue").value = issueFilter;
+    document.getElementById("page-badge").textContent = issueFilter ? `· ${issueFilter}` : "";
+  } else {
+    document.getElementById("page-badge").textContent = "";
+  }
+  if(page==="tickets") renderTickets();
+  if(page==="agents") renderAgents();
+  if(page==="trends") renderTrends();
+}
+
+// ═══ INIT SIDEBAR BADGES ═══
+function initBadges(){
+  const issues = ["Subscription confusion","Refund request","Wrong address","Missing package","Duplicate order","Upset customer"];
+  const idMap = {"Subscription confusion":"sub","Refund request":"refund","Wrong address":"address","Missing package":"missing","Duplicate order":"duplicate","Upset customer":"upset"};
+  issues.forEach(i=>{ const el=document.getElementById("nb-"+idMap[i]); if(el) el.textContent=countIssue(i); });
+  document.getElementById("nb-esc").textContent = TICKETS.filter(t=>t.escalation).length;
+}
+
+// ═══ DASHBOARD ═══
+function initDashboard(){
+  const open = count("status","Open"), pending = count("status","Pending");
+  const upset = TICKETS.filter(t=>t.upset).length;
+  const esc = TICKETS.filter(t=>t.escalation).length;
+  const sla = TICKETS.filter(t=>t.slaBreached).length;
+
+  // SLA alert
+  if(sla>0) document.getElementById("d-alert").innerHTML=`<div class="alert"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg><span><strong>${sla} tickets</strong> have breached SLA and need immediate assignment.</span></div>`;
+
+  // Summary stats (4 cards)
+  document.getElementById("d-summary").innerHTML=[
+    {n:TICKETS.length,l:"Total tickets",s:"Last 3 months",cls:"c-blue",ic:'<path d="M20 12c0-1.1.9-2 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2z"/>'},
+    {n:open,l:"Open",s:"Awaiting response",cls:"c-blue",ic:'<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>'},
+    {n:pending,l:"Pending",s:"Snoozed in Kustomer",cls:"i-escalation",ic:'<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>'},
+    {n:esc,l:"Escalations",s:"High priority unresolved",cls:"i-escalation",ic:SC_ICONS["Escalations"]},
+  ].map(s=>`<div class="sc ${s.cls}"><div class="sc-glow"></div><div class="sc-icon"><svg viewBox="0 0 24 24" fill="currentColor">${s.ic}</svg></div><div class="sc-num">${s.n}</div><div class="sc-label">${s.l}</div><div class="sc-sub">${s.s}</div></div>`).join("");
+
+  // 7 issue type cards
+  const issueList = ["Subscription confusion","Refund request","Wrong address","Missing package","Duplicate order","Upset customer","Escalations"];
+  document.getElementById("d-issues").innerHTML = issueList.map(iss=>{
+    const cfg = IC[iss];
+    const n = countIssue(iss);
+    return `<div class="sc ${cfg.cls}" style="cursor:pointer" onclick="go('tickets',null,'${iss}')">
+      <div class="sc-glow"></div>
+      <div class="sc-icon"><svg viewBox="0 0 24 24" fill="currentColor">${SC_ICONS[iss]}</svg></div>
+      <div class="sc-num">${n}</div>
+      <div class="sc-label">${iss}</div>
+      <div class="sc-sub">Click to view tickets →</div>
+    </div>`;
+  }).join("");
+
+  // Feed
+  const feed = TICKETS.filter(t=>t.status==="Open").slice(0,9);
+  document.getElementById("d-feed").innerHTML=feed.map(t=>`
+    <div class="feed-item">
+      <div class="fdot" style="background:${IC[t.issue]?.color||'#888'}"></div>
+      <div class="fbody">
+        <div class="fsubj">${t.subject}</div>
+        <div class="fmeta">${t.agentName.split(" ")[0]} · ${issuePill(t.issue)} · ${t.updated}</div>
+      </div>
+      ${klink(t.url,t.id)}
+    </div>`).join("");
+
+  // Donut
+  const issueCounts={};
+  TICKETS.forEach(t=>{issueCounts[t.issue]=(issueCounts[t.issue]||0)+1;});
+  const entries=Object.entries(issueCounts).sort((a,b)=>b[1]-a[1]);
+  const total=TICKETS.length, r=15.9, circ=2*Math.PI*r;
+  let offset=0, paths="";
+  entries.forEach(([iss,cnt])=>{
+    const p=cnt/total, d=p*circ;
+    paths+=`<circle cx="18" cy="18" r="${r}" fill="none" stroke="${IC[iss]?.color||'#666'}" stroke-width="3.8" stroke-dasharray="${d} ${circ-d}" stroke-dashoffset="${-offset*circ}" transform="rotate(-90 18 18)"/>`;
+    offset+=p;
+  });
+  document.getElementById("donut").innerHTML=paths;
+  document.getElementById("donut-leg").innerHTML=entries.map(([iss,cnt])=>`
+    <div class="dli"><div class="dli-dot" style="background:${IC[iss]?.color||'#888'}"></div><span>${iss}</span><span class="dli-cnt">${cnt}</span></div>`).join("");
+
+  // Agent bars
+  const agMap={};
+  TICKETS.filter(t=>t.status!=="Resolved").forEach(t=>{agMap[t.agentName]=(agMap[t.agentName]||0)+1;});
+  const agE=Object.entries(agMap).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  const maxA=agE[0]?.[1]||1;
+  const agColors=["#4f8ef7","#22c55e","#f59e0b","#ef4444","#a78bfa","#2dd4bf","#fb923c"];
+  document.getElementById("d-agent-bars").innerHTML=agE.map(([name,cnt],i)=>`
+    <div class="tl-row">
+      <div class="tl-lbl">${name.split(" ")[0]}</div>
+      <div class="tl-wrap"><div class="tl-bar" style="width:${Math.round((cnt/maxA)*100)}%;background:${agColors[i]}20">
+        <span class="tl-n" style="color:${agColors[i]}">${cnt}</span>
+      </div></div>
+    </div>`).join("");
+
+  // Issue bars
+  const maxI=entries[0]?.[1]||1;
+  document.getElementById("d-issue-bars").innerHTML=entries.map(([iss,cnt])=>`
+    <div class="bar-item">
+      <div class="bar-top"><span>${iss}</span><strong>${cnt}</strong></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((cnt/maxI)*100)}%;background:${IC[iss]?.color||'#888'}"></div></div>
+    </div>`).join("");
+}
+
+// ═══ TICKETS PAGE ═══
+function renderTickets(){
+  const q=document.getElementById("t-q").value.toLowerCase();
+  const fi=document.getElementById("t-issue").value;
+  const fs=document.getElementById("t-status").value;
+  const fa=document.getElementById("t-agent").value;
+  const sort=document.getElementById("t-sort").value;
+
+  let list=TICKETS.filter(t=>{
+    if(q && !t.subject.toLowerCase().includes(q) && !t.agentName.toLowerCase().includes(q)) return false;
+    if(fi){
+      if(fi==="Escalations") return t.escalation;
+      if(t.issue!==fi) return false;
+    }
+    if(fs && t.status!==fs) return false;
+    if(fa && t.agentName!==fa) return false;
+    return true;
+  });
+
+  const PORD=["Urgent","High","Medium","Low"];
+  if(sort==="newest") list.sort((a,b)=>b.updated.localeCompare(a.updated));
+  else if(sort==="oldest") list.sort((a,b)=>a.updated.localeCompare(b.updated));
+  else if(sort==="priority") list.sort((a,b)=>PORD.indexOf(a.priority)-PORD.indexOf(b.priority));
+  else if(sort==="upset") list.sort((a,b)=>b.upset-a.upset);
+
+  document.getElementById("t-count").textContent=`${list.length} ticket${list.length!==1?"s":""}`;
+  document.getElementById("t-body").innerHTML=list.length
+    ? list.map(t=>`<tr>
+        <td><span style="font-family:'DM Mono',monospace;font-size:10.5px;color:var(--text3)">${t.id.slice(-8)}</span></td>
+        <td class="subj" title="${t.subject}">${t.subject}</td>
+        <td>${issuePill(t.issue)}</td>
+        <td>${prioPill(t.priority)}</td>
+        <td>${statusPill(t.status)}</td>
+        <td style="font-size:12px">${t.agentName.split(" ")[0]}</td>
+        <td><span style="font-size:11px;color:var(--text3)">${t.channel==="sms"?"SMS":"Email"}</span></td>
+        <td><span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3)">${t.updated}</span></td>
+        <td>${klink(t.url,t.id)}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="9" style="text-align:center;padding:36px;color:var(--text3);font-size:13px">No tickets match your filters</td></tr>`;
+}
+
+function initTicketFilters(){
+  const agents=[...new Set(TICKETS.map(t=>t.agentName))].sort();
+  const sel=document.getElementById("t-agent");
+  agents.forEach(a=>{const o=document.createElement("option");o.value=a;o.textContent=a;sel.appendChild(o);});
+}
+
+// ═══ AGENTS PAGE ═══
+function renderAgents(){
+  const map={};
+  TICKETS.forEach(t=>{
+    if(!map[t.agentName]) map[t.agentName]={name:t.agentName,total:0,open:0,escalation:0,upset:0};
+    map[t.agentName].total++;
+    if(t.status==="Open") map[t.agentName].open++;
+    if(t.escalation) map[t.agentName].escalation++;
+    if(t.upset) map[t.agentName].upset++;
+  });
+  const agents=Object.values(map).sort((a,b)=>b.total-a.total);
+  const unassigned=TICKETS.filter(t=>t.agentName==="Unassigned").length;
+
+  document.getElementById("ag-stats").innerHTML=[
+    {n:agents.filter(a=>a.name!=="Unassigned").length,l:"Active agents",cls:"c-blue"},
+    {n:agents[0]?.total||0,l:`Top load: ${agents[0]?.name.split(" ")[0]||""}`,cls:"i-upset"},
+    {n:unassigned,l:"Unassigned tickets",cls:"i-escalation"},
+    {n:Math.round(TICKETS.length/Math.max(agents.filter(a=>a.name!=="Unassigned").length,1)),l:"Avg per agent",cls:"c-green"},
+  ].map(s=>`<div class="sc ${s.cls}"><div class="sc-num">${s.n}</div><div class="sc-label">${s.l}</div></div>`).join("");
+
+  document.getElementById("ag-grid").innerHTML=agents.map((a,i)=>`
+    <div class="ag-tile">
+      <div class="ag-top">${av(a.name,i)}<div><div class="ag-name">${a.name}</div><div class="ag-role">CS Agent</div></div></div>
+      <div class="ag-pips">
+        <span class="ap tot">${a.total} total</span>
+        <span class="ap opn">${a.open} open</span>
+        ${a.escalation?`<span class="ap esc">${a.escalation} esc</span>`:""}
+        ${a.upset?`<span class="ap ups">${a.upset} upset</span>`:""}
+      </div>
+    </div>`).join("");
+}
+
+// ═══ TRENDS PAGE ═══
+function renderTrends(){
+  function bars(entries, colorFn){
+    const max=Math.max(...entries.map(([,v])=>v),1);
+    return entries.map(([l,n])=>`
+      <div class="bar-item">
+        <div class="bar-top"><span>${l}</span><strong>${n}</strong></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round((n/max)*100)}%;background:${colorFn(l)}"></div></div>
+      </div>`).join("");
+  }
+
+  const ic={};TICKETS.forEach(t=>{ic[t.issue]=(ic[t.issue]||0)+1;});
+  document.getElementById("tr-issue").innerHTML=bars(Object.entries(ic).sort((a,b)=>b[1]-a[1]),l=>IC[l]?.color||"#888");
+
+  const sc={};TICKETS.forEach(t=>{sc[t.status]=(sc[t.status]||0)+1;});
+  const scol={Open:"var(--blue)",Pending:"var(--amber)",Resolved:"var(--green)"};
+  document.getElementById("tr-status").innerHTML=bars(Object.entries(sc).sort((a,b)=>b[1]-a[1]),l=>scol[l]||"#888");
+
+  const ch={};TICKETS.forEach(t=>{ch[t.channel]=(ch[t.channel]||0)+1;});
+  const ccol={email:"var(--blue)",sms:"var(--green)",chat:"var(--purple)"};
+  document.getElementById("tr-channel").innerHTML=bars(Object.entries(ch).sort((a,b)=>b[1]-a[1]),l=>ccol[l]||"#888");
+
+  const neg=TICKETS.filter(t=>t.sentiment<0).length, neu=TICKETS.filter(t=>t.sentiment===0).length, pos=TICKETS.filter(t=>t.sentiment>0).length;
+  document.getElementById("tr-sentiment").innerHTML=bars([["Negative",neg],["Neutral",neu],["Positive",pos]],l=>l==="Negative"?"var(--red)":l==="Positive"?"var(--green)":"var(--text3)");
+
+  const sub=countIssue("Subscription confusion"), upst=TICKETS.filter(t=>t.upset).length;
+  const enrico=TICKETS.filter(t=>t.agentName==="Enrico Emil Dela Rosa").length;
+  const unas=TICKETS.filter(t=>t.agentName==="Unassigned").length;
+  document.getElementById("tr-insights").innerHTML=[
+    {color:"var(--orange)",title:`Subscription confusion is #1 at ${sub} tickets (${Math.round(sub/TICKETS.length*100)}%)`,body:"Customers are unaware they're on auto-ship. Fix checkout copy and order confirmation emails to clearly state subscription terms."},
+    {color:"var(--red)",title:`${upst} upset customers need same-day follow-up`,body:"Negative sentiment tickets are clustered in Enrico's queue. Ensure capacity is not overloaded — consider redistribution to Shai and Lei."},
+    {color:"var(--amber)",title:`Enrico holds ${enrico} of ${TICKETS.length} tickets (${Math.round(enrico/TICKETS.length*100)}%)`,body:"One agent shouldn't own 60%+ of the queue. Redistribute to Angel, Patriz, and Bon to reduce risk of missed responses."},
+    {color:"var(--blue)",title:`${unas} tickets are unassigned — assign now`,body:"Unassigned tickets include negatively-scored conversations. These should be triaged and assigned within the next 30 minutes to prevent escalation."},
+  ].map(i=>`<div class="ins" style="border-left:3px solid ${i.color}"><div class="ins-title">${i.title}</div><div class="ins-body">${i.body}</div></div>`).join("");
+}
+
+// ═══ BOOT ═══
+initBadges();
+initDashboard();
+initTicketFilters();
+renderTickets();
+</script>
+</body>
+</html>
